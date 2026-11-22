@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101522">
+  <title>World Clock &amp; Alarms</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, "Segoe UI", "Noto Sans TC", sans-serif;
+      background: #101522;
+      color: #f4f5fb;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      --muted: #9da5ba;
+      --line: rgba(255, 255, 255, .09);
+      --surface: rgba(26, 33, 50, .88);
+      --accent: #b7a5ff;
+    }
+
+    * { box-sizing: border-box; }
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      padding: 30px 24px;
+      background:
+        radial-gradient(ellipse at 50% -20%, rgba(107, 86, 185, .3), transparent 46%),
+        radial-gradient(ellipse at 100% 80%, rgba(38, 89, 113, .16), transparent 40%),
+        #101522;
+    }
+
+    button, select, input { font: inherit; }
+    button, select { cursor: pointer; }
+
+    .app { width: min(100%, 980px); margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-size: 15px; font-weight: 700; letter-spacing: .03em; }
+    .brand-icon {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      place-items: center;
+      border: 1px solid rgba(183, 165, 255, .26);
+      border-radius: 13px;
+      background: rgba(183, 165, 255, .12);
+      color: var(--accent);
+      font-size: 19px;
+    }
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .local-note { color: var(--muted); font-size: 12px; }
+    .language-toggle { padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; background: #20283a; color: #e4e6ef; font-size: 11px; }
+    .language-toggle:hover { border-color: var(--accent); }
+
+    .world-panel {
+      padding: 14px 18px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(32, 39, 59, .96), rgba(24, 31, 47, .92));
+      box-shadow: 0 24px 80px rgba(0, 0, 0, .2);
+    }
+    .world-heading { margin: 0; font-size: 14px; font-weight: 650; }
+    .world-caption { margin: 3px 0 8px; color: var(--muted); font-size: 9px; }
+    .world-timeline { --label-width: 160px; position: relative; display: grid; gap: 2px; }
+    .timezone-row { display: grid; grid-template-columns: var(--label-width) minmax(0, 1fr); gap: 12px; align-items: center; min-height: 20px; }
+    .timezone-info { display: flex; min-width: 0; align-items: baseline; gap: 7px; text-align: left; white-space: nowrap; }
+    .timezone-name { overflow: hidden; color: #e8eaf2; font-size: 11px; font-weight: 650; text-overflow: ellipsis; }
+    .timezone-time { color: #fff; font-size: 13px; font-weight: 450; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+    .timezone-standard { color: var(--muted); font-size: 9px; }
+    .timeline-area { min-width: 0; }
+    .day-track { position: relative; height: 14px; border: 1px solid rgba(255, 255, 255, .16); border-radius: 999px; background-color: #11151f; }
+    .date-marker { position: absolute; z-index: 4; top: -5px; width: 0; height: 20px; }
+    .date-marker::before { position: absolute; top: 0; left: 50%; border-top: 6px solid #fff; border-right: 5px solid transparent; border-left: 5px solid transparent; content: ""; filter: drop-shadow(0 1px 1px #000); transform: translateX(-50%); }
+    .date-marker-label { position: absolute; top: 3px; left: 50%; color: #fff; font-size: 9px; font-weight: 750; line-height: 1; white-space: nowrap; -webkit-text-stroke: 1.5px #090a0d; paint-order: stroke fill; text-shadow: 0 1px 1px #090a0d; }
+    .now-line {
+      position: absolute;
+      z-index: 3;
+      top: 3px;
+      bottom: 0;
+      left: calc(var(--label-width) + 12px + (100% - var(--label-width) - 12px) / 2);
+      width: 1px;
+      background: rgba(255, 255, 255, .94);
+      box-shadow: 0 0 3px rgba(255, 255, 255, .8);
+      pointer-events: none;
+    }
+    .now-badge {
+      position: absolute;
+      z-index: 3;
+      top: -12px;
+      left: calc(var(--label-width) + 17px + (100% - var(--label-width) - 17px) / 2);
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: #e9e9ef;
+      color: #161a25;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      transform: translateX(-50%);
+    }
+
+    .section-heading { display: flex; justify-content: space-between; align-items: end; margin: 14px 0 7px; }
+    .section-heading h1, .section-heading h2 { margin: 0; font-size: 20px; font-weight: 650; letter-spacing: -.02em; }
+    .section-heading p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
+    .alarm-count { color: var(--muted); font-size: 12px; }
+
+    .content-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(290px, .85fr); gap: 12px; align-items: start; }
+    .panel { border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
+    .form-panel { padding: 12px; }
+    .form-title { margin: 0 0 9px; font-size: 13px; font-weight: 650; }
+    .field-label { display: block; margin-bottom: 6px; color: #c7ccda; font-size: 11px; }
+    .time-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 11px;
+      outline: none;
+      background: #171d2b;
+      color: #fff;
+      color-scheme: dark;
+      font-size: 18px;
+      font-variant-numeric: tabular-nums;
+    }
+    input:focus { border-color: var(--accent); }
+    .zone-fieldset { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; margin: 0; padding: 0; border: 0; }
+    .zone-legend { margin-bottom: 5px; color: #c7ccda; font-size: 10px; }
+    .zone-choice { display: grid; grid-template-columns: 13px minmax(0, 1fr); grid-template-rows: auto auto; align-content: center; column-gap: 5px; min-height: 34px; padding: 4px 5px; border: 1px solid rgba(255, 255, 255, .11); border-radius: 8px; background: #171d2b; cursor: pointer; }
+    .zone-choice:has(input:checked) { border-color: rgba(183, 165, 255, .55); background: rgba(183, 165, 255, .12); }
+    .zone-choice input { grid-column: 1; grid-row: 1 / 3; margin: 0; accent-color: #b7a5ff; }
+    .zone-choice-name { grid-column: 2; grid-row: 1; overflow: hidden; font-size: 10px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .zone-choice-offset { grid-column: 2; grid-row: 2; margin-top: 2px; color: var(--muted); font-size: 8px; white-space: nowrap; }
+    .repeat-label { margin-top: 9px; }
+    .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+    .weekday {
+      display: grid;
+      min-height: 31px;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, .11);
+      border-radius: 10px;
+      background: #171d2b;
+      color: #aeb5c6;
+      font-size: 12px;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .weekday:hover { border-color: rgba(183, 165, 255, .55); }
+    .weekday[aria-pressed="true"] { border-color: rgba(183, 165, 255, .5); background: rgba(183, 165, 255, .17); color: #e2dbff; }
+    .repeat-hint { margin: 6px 0 0; color: var(--muted); font-size: 9px; }
+    .form-actions { display: flex; gap: 7px; margin-top: 9px; }
+    .add-button, .cancel-button {
+      flex: 1;
+      padding: 7px 10px;
+      border: 0;
+      border-radius: 11px;
+      font-weight: 700;
+      transition: filter .15s, transform .15s;
+    }
+    .add-button { background: #b7a5ff; color: #1a1530; }
+    .cancel-button { background: #343c50; color: #e4e6ef; }
+    .add-button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .add-button:active { transform: translateY(0); }
+
+    .alarms-panel { overflow: hidden; }
+    .alarm-list { display: grid; }
+    .empty-state { padding: 34px 20px; color: var(--muted); text-align: center; font-size: 13px; }
+    .empty-icon { display: block; margin-bottom: 10px; font-size: 24px; opacity: .7; }
+    .alarm-item { padding: 8px 9px; border-bottom: 1px solid var(--line); }
+    .alarm-item:last-child { border-bottom: 0; }
+    .alarm-item.disabled { opacity: .48; }
+    .alarm-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .alarm-main { min-width: 0; }
+    .alarm-time { font-variant-numeric: tabular-nums; font-size: 18px; font-weight: 550; letter-spacing: -.04em; }
+    .alarm-meta { overflow: hidden; margin-top: 2px; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+    .alarm-weekdays { display: grid; grid-template-columns: repeat(7, 22px); gap: 3px; margin-top: 5px; }
+    .alarm-day { color: #d0d4df; font-size: 9px; line-height: 1; text-align: center; }
+    .alarm-day.saturday { color: #8ed4a1; }
+    .alarm-day.sunday { color: #ff9398; }
+    .alarm-day-check { display: block; min-height: 10px; margin-top: 3px; color: var(--accent); font-size: 9px; font-weight: 700; }
+    .alarm-actions { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+    .edit-button { padding: 4px 6px; border: 1px solid rgba(255, 255, 255, .12); border-radius: 7px; background: transparent; color: #c9c1ff; font-size: 9px; }
+    .edit-button:hover { border-color: var(--accent); }
+    .toggle { position: relative; width: 38px; height: 22px; padding: 0; border: 0; border-radius: 20px; background: #41485a; transition: background .15s; }
+    .toggle::after { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: white; content: ""; transition: transform .15s; }
+    .toggle[aria-pressed="true"] { background: #9580ed; }
+    .toggle[aria-pressed="true"]::after { transform: translateX(16px); }
+    .delete-button { width: 28px; height: 30px; border: 0; background: transparent; color: #8991a5; font-size: 18px; }
+    .delete-button:hover { color: #ff9a9a; }
+    .alarm-zone-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; margin-top: 5px; }
+    .alarm-zone-cell { min-width: 0; padding: 4px 3px; border: 1px solid rgba(255, 255, 255, .07); border-radius: 7px; background: rgba(15, 21, 33, .48); }
+    .alarm-zone-cell.source-zone { border-color: rgba(183, 165, 255, .32); background: rgba(183, 165, 255, .08); }
+    .alarm-zone-name { overflow: hidden; color: var(--muted); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+    .alarm-zone-time { margin-top: 2px; font-size: 13px; font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
+    .alarm-zone-shift { min-height: 9px; margin-top: 1px; color: #a6aec1; font-size: 7px; }
+
+    .notice { min-height: 0; margin: 5px 0 0; color: #ffb1a8; font-size: 10px; }
+    .alarm-alert {
+      position: fixed;
+      z-index: 3;
+      right: 20px;
+      bottom: 20px;
+      left: 20px;
+      display: none;
+      max-width: 460px;
+      margin: auto;
+      padding: 18px 20px;
+      border: 1px solid rgba(255, 192, 119, .35);
+      border-radius: 16px;
+      background: #302638;
+      box-shadow: 0 16px 50px rgba(0, 0, 0, .4);
+    }
+    .alarm-alert.visible { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+    .alert-title { margin-bottom: 4px; font-weight: 700; }
+    .alert-subtitle { color: #c7b9cc; font-size: 12px; }
+    .dismiss-button { padding: 8px 13px; border: 0; border-radius: 9px; background: #d7a2ff; color: #24162e; font-weight: 650; }
+
+    @media (max-width: 700px) {
+      body {       padding: 18px 12px 24px; }
+      .topbar { margin-bottom: 12px; }
+      .header-actions { gap: 7px; }
+      .local-note { max-width: 110px; text-align: right; line-height: 1.4; font-size: 10px; }
+      .world-panel { padding: 12px 10px; border-radius: 20px; }
+      .world-timeline { --label-width: 144px; gap: 2px; }
+      .timezone-row { gap: 8px; }
+      .timezone-info { gap: 5px; }
+      .timezone-name { font-size: 9px; }
+      .timezone-time { font-size: 12px; }
+      .timezone-standard { font-size: 8px; }
+      .now-line, .now-badge { left: calc(var(--label-width) + 8px + (100% - var(--label-width) - 8px) / 2); }
+      .section-heading { margin-top: 12px; }
+      .content-grid { grid-template-columns: 1fr; }
+      .zone-fieldset { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
+      .zone-choice { grid-template-columns: 11px minmax(0, 1fr); column-gap: 3px; min-height: 30px; padding: 3px; }
+      .zone-choice-name { font-size: 9px; }
+      .zone-choice-offset { font-size: 7px; }
+      .alarm-item { padding: 8px; }
+      .alarm-zone-grid { gap: 3px; margin-top: 4px; }
+      .alarm-zone-cell { padding: 3px; }
+      .alarm-zone-name { font-size: 9px; }
+      .alarm-zone-time { font-size: 14px; }
+      .alarm-actions { gap: 5px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-icon" aria-hidden="true">◷</span><span id="brand-title">World Clock &amp; Alarms</span></div>
+      <div class="header-actions">
+        <span class="local-note" id="brand-note">Plan across time zones</span>
+        <button class="language-toggle" id="language-toggle" type="button" aria-label="Switch to Chinese">中文</button>
+      </div>
+    </header>
+
+    <section class="world-panel" id="world-panel" aria-label="World clocks">
+      <h1 class="world-heading" id="world-heading">World clock</h1>
+      <p class="world-caption" id="world-caption">36-hour window · Night: dark · Weekday: yellow · Sat: green · Sun: red</p>
+      <div class="world-timeline" id="world-timeline">
+        <div class="now-badge" aria-hidden="true">NOW</div>
+        <div class="now-line" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <div class="section-heading">
+      <div>
+        <h1 id="alarms-heading">Alarms</h1>
+        <p id="alarms-caption">Next ring time in all five time zones, including day changes</p>
+      </div>
+      <span class="alarm-count" id="alarm-count">0 alarms</span>
+    </div>
+
+    <div class="content-grid">
+      <section class="panel form-panel" aria-labelledby="create-heading">
+        <h2 class="form-title" id="create-heading">Add alarm</h2>
+        <form id="alarm-form">
+          <label class="field-label" id="time-label" for="alarm-time">Time</label>
+          <input class="time-input" id="alarm-time" type="time" required>
+          <fieldset class="zone-fieldset" id="zone-choices">
+            <legend class="zone-legend" id="zone-legend">Alarm time zone</legend>
+          </fieldset>
+          <span class="field-label repeat-label" id="repeat-label">Repeat</span>
+          <div class="weekdays" id="weekdays" aria-label="Choose days to repeat"></div>
+          <p class="repeat-hint" id="repeat-hint">No days selected means one-time. Keep this page open for alarms to ring.</p>
+          <div class="form-actions">
+            <button class="add-button" id="submit-button" type="submit">＋　Add alarm</button>
+            <button class="cancel-button" id="cancel-edit" type="button" hidden>Cancel</button>
+          </div>
+          <p class="notice" id="notice" role="status"></p>
+        </form>
+      </section>
+
+      <section class="panel alarms-panel" id="alarms-panel" aria-label="Alarm list">
+        <div class="alarm-list" id="alarm-list"></div>
+      </section>
+    </div>
+  </main>
+
+  <aside class="alarm-alert" id="alarm-alert" role="alert" aria-live="assertive">
+    <div><div class="alert-title" id="alert-title">Alarm</div><div class="alert-subtitle" id="alert-subtitle"></div></div>
+    <button class="dismiss-button" id="dismiss-alarm" type="button">Dismiss</button>
+  </aside>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const zoneOrder = [
+        { id: "America/Los_Angeles", name: "Los Angeles", nameZh: "洛杉矶", shortName: "LA", shortNameZh: "洛杉矶", standardOffset: -8, offsetLabel: "UTC−08:00", offsetShort: "UTC−8" },
+        { id: "America/Denver", name: "El Paso", nameZh: "埃尔帕索", shortName: "El Paso", shortNameZh: "埃尔帕索", standardOffset: -7, offsetLabel: "UTC−07:00", offsetShort: "UTC−7" },
+        { id: "America/Chicago", name: "Houston", nameZh: "休斯顿", shortName: "HOU", shortNameZh: "休斯顿", standardOffset: -6, offsetLabel: "UTC−06:00", offsetShort: "UTC−6" },
+        { id: "America/New_York", name: "New York", nameZh: "纽约", shortName: "NYC", shortNameZh: "纽约", standardOffset: -5, offsetLabel: "UTC−05:00", offsetShort: "UTC−5" },
+        { id: "Asia/Taipei", name: "Taipei", nameZh: "台北", shortName: "TPE", shortNameZh: "台北", standardOffset: 8, offsetLabel: "UTC+08:00", offsetShort: "UTC+8" }
+      ].sort(function (a, b) { return b.standardOffset - a.standardOffset; });
+      const zones = {};
+      zoneOrder.forEach(function (zone) { zones[zone.id] = zone.name; });
+      const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const fullWeekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const weekdayIndexes = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+      const translations = {
+        en: {
+          title: "World Clock & Alarms",
+          brandNote: "Plan across time zones",
+          worldClock: "World clock",
+          worldCaption: "36-hour window · Night: dark · Weekday: yellow · Sat: green · Sun: red",
+          worldAria: "World clocks",
+          dayNightAria: "day and night timeline",
+          now: "NOW",
+          alarms: "Alarms",
+          alarmsCaption: "Next ring time in all five time zones, including day changes",
+          addAlarm: "Add alarm",
+          editAlarm: "Edit alarm",
+          saveChanges: "Save changes",
+          cancel: "Cancel",
+          time: "Time",
+          timeZone: "Alarm time zone",
+          repeat: "Repeat",
+          repeatHint: "No days selected means one-time. Keep this page open for alarms to ring.",
+          chooseDays: "Choose days to repeat",
+          alarmList: "Alarm list",
+          alarm: "alarm",
+          alarmsCount: "alarms",
+          emptyTitle: "No alarms yet",
+          emptyBody: "Add one to remember an important moment.",
+          alarmZone: "Alarm zone",
+          dayChangesTo: "Date changes to",
+          nextDay: "Next day",
+          previousDay: "Previous day",
+          once: "Once",
+          everyDay: "Every day",
+          weekly: "Weekly",
+          dayStatusSeparator: ", ",
+          editNotice: "Editing this alarm's time, time zone, or repeat days.",
+          saveError: "Could not save alarms. Check your browser storage settings.",
+          loadError: "Could not load saved alarms.",
+          playError: "Could not play alarm sound.",
+          chooseTime: "Choose an alarm time first.",
+          chooseTimeZone: "Choose the time zone used for this alarm time.",
+          alarmNotFound: "This alarm could not be found. Refresh the page and try again.",
+          edit: "Edit",
+          enable: "Enable",
+          disable: "Disable",
+          delete: "Delete",
+          dismiss: "Dismiss",
+          ring: "Alarm",
+          switchLanguage: "Switch to Chinese",
+          languageButton: "中文",
+          weekdays: fullWeekdays,
+          weekdayShort: weekdays,
+          alarmWeekdayLetters: ["M", "T", "W", "T", "F", "S", "S"],
+          selectedDay: "Selected",
+          unselectedDay: "Not selected",
+          locale: "en-US",
+          pageLanguage: "en"
+        },
+        zh: {
+          title: "世界时钟与闹钟",
+          brandNote: "跨时区安排时间",
+          worldClock: "世界时钟",
+          worldCaption: "36 小时范围 · 夜间：深色 · 工作日：浅黄 · 周六：浅绿 · 周日：浅红",
+          worldAria: "世界时钟",
+          dayNightAria: "昼夜时间条",
+          now: "现在",
+          alarms: "闹钟",
+          alarmsCaption: "显示五个时区的下次响铃时间，包含跨日情况",
+          addAlarm: "添加闹钟",
+          editAlarm: "修改闹钟",
+          saveChanges: "保存修改",
+          cancel: "取消",
+          time: "时间",
+          timeZone: "闹钟时区",
+          repeat: "重复",
+          repeatHint: "未选择星期表示仅响铃一次；闹钟响铃时请保持此页面开启。",
+          chooseDays: "选择重复日期",
+          alarmList: "闹钟列表",
+          alarm: "个闹钟",
+          alarmsCount: "个闹钟",
+          emptyTitle: "还没有闹钟",
+          emptyBody: "添加闹钟，提醒自己重要的时刻。",
+          alarmZone: "设定时区",
+          dayChangesTo: "日期切换为",
+          nextDay: "次日",
+          previousDay: "前日",
+          once: "单次",
+          everyDay: "每天",
+          weekly: "每周",
+          dayStatusSeparator: "，",
+          editNotice: "正在修改此闹钟的时间、时区或重复日期。",
+          saveError: "无法保存闹钟，请检查浏览器存储空间设置。",
+          loadError: "无法读取已保存的闹钟。",
+          playError: "无法播放闹钟声音。",
+          chooseTime: "请先选择闹钟时间。",
+          chooseTimeZone: "请选择此闹钟时间所使用的时区。",
+          alarmNotFound: "找不到要修改的闹钟，请刷新页面后重试。",
+          edit: "修改",
+          enable: "开启",
+          disable: "关闭",
+          delete: "删除",
+          dismiss: "停止",
+          ring: "闹钟",
+          switchLanguage: "切换为英文",
+          languageButton: "English",
+          weekdays: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
+          weekdayShort: ["日", "一", "二", "三", "四", "五", "六"],
+          alarmWeekdayLetters: ["一", "二", "三", "四", "五", "六", "日"],
+          selectedDay: "已选择",
+          unselectedDay: "未选择",
+          locale: "zh-CN",
+          pageLanguage: "zh-CN"
+        }
+      };
+      let language = "en";
+      function text(key) { return translations[language][key]; }
+      function zoneName(timezone) {
+        const zone = zoneOrder.find(function (entry) { return entry.id === timezone; });
+        return zone ? (language === "zh" ? zone.nameZh : zone.name) : timezone;
+      }
+      function zoneShortName(zone) {
+        return language === "zh" ? zone.shortNameZh : zone.shortName;
+      }
+      const weekdaysRoot = document.getElementById("weekdays");
+      const zoneChoices = document.getElementById("zone-choices");
+      const worldTimeline = document.getElementById("world-timeline");
+      const alarmForm = document.getElementById("alarm-form");
+      const timeInput = document.getElementById("alarm-time");
+      const alarmList = document.getElementById("alarm-list");
+      const notice = document.getElementById("notice");
+      const alertBox = document.getElementById("alarm-alert");
+      const submitButton = document.getElementById("submit-button");
+      const cancelEditButton = document.getElementById("cancel-edit");
+      const nowLine = worldTimeline.querySelector(".now-line");
+      const nowBadge = worldTimeline.querySelector(".now-badge");
+      let alarms = loadAlarms();
+      let editingAlarmId = null;
+      let audioContext;
+      let soundTimer;
+      let ringingAlarm = null;
+      const firedToday = new Set();
+      let lastTimelineSlot = "";
+      let timelineStart = 0;
+
+      const worldClockNodes = zoneOrder.map(function (zone) {
+        const row = document.createElement("article");
+        row.className = "timezone-row";
+        const info = document.createElement("div");
+        info.className = "timezone-info";
+        const name = document.createElement("div");
+        name.className = "timezone-name";
+        name.textContent = zoneShortName(zone);
+        const time = document.createElement("div");
+        time.className = "timezone-time";
+        const standard = document.createElement("div");
+        standard.className = "timezone-standard";
+        info.append(name, time, standard);
+
+        const area = document.createElement("div");
+        area.className = "timeline-area";
+        const track = document.createElement("div");
+        track.className = "day-track";
+        track.setAttribute("aria-label", zone.name + " " + text("dayNightAria"));
+        area.append(track);
+        row.dataset.timezone = zone.id;
+        row.append(info, area);
+        worldTimeline.appendChild(row);
+        return { row: row, time: time, standard: standard, track: track, zone: zone };
+      });
+
+      zoneOrder.forEach(function (zone) {
+        const label = document.createElement("label");
+        label.className = "zone-choice";
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "alarm-timezone";
+        radio.value = zone.id;
+        radio.required = true;
+        radio.checked = zone.id === "Asia/Taipei";
+        radio.setAttribute("aria-label", zone.name + " " + zone.offsetLabel);
+        const name = document.createElement("span");
+        name.className = "zone-choice-name";
+        name.textContent = zoneShortName(zone);
+        name.title = zone.name;
+        const offset = document.createElement("span");
+        offset.className = "zone-choice-offset";
+        offset.textContent = zone.offsetShort;
+        label.append(radio, name, offset);
+        zoneChoices.appendChild(label);
+      });
+
+      weekdays.forEach(function (day, index) {
+        const button = document.createElement("button");
+        button.className = "weekday";
+        button.type = "button";
+        button.textContent = day;
+        button.setAttribute("aria-label", fullWeekdays[index]);
+        button.setAttribute("aria-pressed", "false");
+        button.dataset.day = String(index);
+        button.addEventListener("click", function () {
+          button.setAttribute("aria-pressed", button.getAttribute("aria-pressed") !== "true" ? "true" : "false");
+        });
+        weekdaysRoot.appendChild(button);
+      });
+
+      function loadAlarms() {
+        try {
+          const saved = JSON.parse(localStorage.getItem("timezone-alarms") || "[]");
+          if (!Array.isArray(saved)) return [];
+          return saved.filter(function (alarm) {
+            return alarm && typeof alarm.id === "string" &&
+              /^\d{2}:\d{2}$/.test(alarm.time) &&
+              Array.isArray(alarm.days) &&
+              Object.prototype.hasOwnProperty.call(zones, alarm.timezone) &&
+              typeof alarm.enabled === "boolean";
+          });
+        } catch (error) {
+          console.error("Could not load saved alarms.", error);
+          return [];
+        }
+      }
+
+      function saveAlarms() {
+        try {
+          localStorage.setItem("timezone-alarms", JSON.stringify(alarms));
+          return true;
+        } catch (error) {
+          notice.textContent = text("saveError");
+          console.error("Could not save alarms.", error);
+          return false;
+        }
+      }
+
+      function getParts(date, timezone) {
+        const parts = new Intl.DateTimeFormat("en-US", {
+          timeZone: timezone,
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          weekday: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hourCycle: "h23"
+        }).formatToParts(date);
+        const result = {};
+        parts.forEach(function (part) {
+          if (part.type !== "literal") result[part.type] = part.value;
+        });
+        return result;
+      }
+
+      function dateKey(parts) {
+        return parts.year + "-" + parts.month + "-" + parts.day;
+      }
+
+      function addDateMarker(card, instant, position) {
+        const marker = document.createElement("span");
+        marker.className = "date-marker";
+        marker.style.left = position + "%";
+        const label = document.createElement("span");
+        label.className = "date-marker-label";
+        label.textContent = new Intl.DateTimeFormat(text("locale"), {
+          timeZone: card.zone.id,
+          weekday: "short",
+          month: "short",
+          day: "numeric"
+        }).format(new Date(instant + 1000));
+        if (position < 10) {
+          label.style.left = "4px";
+          label.style.transform = "none";
+        } else if (position > 90) {
+          label.style.left = "auto";
+          label.style.right = "4px";
+          label.style.transform = "none";
+        }
+        marker.title = text("dayChangesTo") + " " + label.textContent;
+        marker.appendChild(label);
+        card.track.appendChild(marker);
+      }
+
+      function renderDateMarkers(card, start, end) {
+        card.track.replaceChildren();
+        let previousTime = start;
+        const previousParts = getParts(new Date(start), card.zone.id);
+        let previousKey = dateKey(previousParts);
+        if (previousParts.hour === "00" && previousParts.minute === "00") {
+          addDateMarker(card, start, 0);
+        }
+
+        for (let sampleTime = start + 15 * 60000; sampleTime <= end; sampleTime += 15 * 60000) {
+          const sampleParts = getParts(new Date(sampleTime), card.zone.id);
+          const sampleKey = dateKey(sampleParts);
+          if (sampleKey !== previousKey) {
+            let low = previousTime;
+            let high = sampleTime;
+            while (high - low > 1000) {
+              const midpoint = Math.floor((low + high) / 2);
+              if (dateKey(getParts(new Date(midpoint), card.zone.id)) === previousKey) low = midpoint;
+              else high = midpoint;
+            }
+            addDateMarker(card, high, (high - start) / (end - start) * 100);
+          }
+          previousTime = sampleTime;
+          previousKey = sampleKey;
+        }
+      }
+
+      function positionNowMarker(now) {
+        const progress = (now.getTime() - timelineStart) / (36 * 60 * 60000);
+        const trackRect = worldClockNodes[0].track.getBoundingClientRect();
+        const timelineRect = worldTimeline.getBoundingClientRect();
+        const markerLeft = trackRect.left - timelineRect.left + trackRect.width * progress;
+        nowLine.style.left = markerLeft + "px";
+        nowBadge.style.left = markerLeft + "px";
+      }
+
+      function renderClock() {
+        const now = new Date();
+        worldClockNodes.forEach(function (card) {
+          const timezone = card.zone.id;
+          const parts = getParts(now, timezone);
+          card.time.textContent = parts.hour + ":" + parts.minute + ":" + parts.second;
+          card.standard.textContent = new Intl.DateTimeFormat("en-US", {
+            timeZone: timezone,
+            timeZoneName: "short"
+          }).formatToParts(now).filter(function (part) {
+            return part.type === "timeZoneName";
+          })[0].value;
+        });
+        const timelineSlot = String(Math.floor(now.getTime() / (20 * 60 * 1000)));
+        if (timelineSlot !== lastTimelineSlot) {
+          lastTimelineSlot = timelineSlot;
+          timelineStart = now.getTime() - 18 * 60 * 60000;
+          const end = timelineStart + 36 * 60 * 60000;
+          worldClockNodes.forEach(function (card) {
+            const night = [17, 20, 30];
+            const weekdayDay = [246, 225, 160];
+            const saturdayDay = [195, 231, 202];
+            const sundayDay = [244, 185, 190];
+            function mix(from, to, ratio) {
+              return "rgb(" + from.map(function (value, index) {
+                return Math.round(value + (to[index] - value) * ratio);
+              }).join(",") + ")";
+            }
+            function colorAt(minute, dayColor) {
+              const localMinute = ((minute % 1440) + 1440) % 1440;
+              if (localMinute >= 300 && localMinute < 420) return mix(night, dayColor, (localMinute - 300) / 120);
+              if (localMinute >= 1020 && localMinute < 1140) return mix(dayColor, night, (localMinute - 1020) / 120);
+              return localMinute >= 420 && localMinute < 1020 ? mix(dayColor, dayColor, 0) : mix(night, night, 0);
+            }
+            const stops = [];
+            for (let minute = 0; minute <= 2160; minute += 15) {
+              const sample = new Date(timelineStart + minute * 60000);
+              const parts = getParts(sample, card.zone.id);
+              const localMinute = Number(parts.hour) * 60 + Number(parts.minute);
+              const weekday = weekdayIndexes[parts.weekday];
+              const dayColor = weekday === 6 ? saturdayDay : (weekday === 0 ? sundayDay : weekdayDay);
+              stops.push(colorAt(localMinute, dayColor) + " " + (minute / 2160 * 100) + "%");
+            }
+            card.track.style.background = "linear-gradient(to right, " + stops.join(", ") + ")";
+            renderDateMarkers(card, timelineStart, end);
+          });
+        }
+        positionNowMarker(now);
+      }
+
+      function applyLanguage(nextLanguage) {
+        language = nextLanguage;
+        const copy = translations[language];
+        document.documentElement.lang = copy.pageLanguage;
+        document.title = copy.title;
+        document.getElementById("brand-title").textContent = copy.title;
+        document.getElementById("brand-note").textContent = copy.brandNote;
+        document.getElementById("language-toggle").textContent = copy.languageButton;
+        document.getElementById("language-toggle").setAttribute("aria-label", copy.switchLanguage);
+        document.getElementById("world-heading").textContent = copy.worldClock;
+        document.getElementById("world-caption").textContent = copy.worldCaption;
+        document.getElementById("world-panel").setAttribute("aria-label", copy.worldAria);
+        document.getElementById("world-timeline").setAttribute("aria-label", copy.worldAria);
+        document.getElementById("alarms-heading").textContent = copy.alarms;
+        document.getElementById("alarms-caption").textContent = copy.alarmsCaption;
+        document.getElementById("time-label").textContent = copy.time;
+        document.getElementById("zone-legend").textContent = copy.timeZone;
+        document.getElementById("repeat-label").textContent = copy.repeat;
+        document.getElementById("repeat-hint").textContent = copy.repeatHint;
+        document.getElementById("weekdays").setAttribute("aria-label", copy.chooseDays);
+        document.getElementById("alarms-panel").setAttribute("aria-label", copy.alarmList);
+        document.getElementById("dismiss-alarm").textContent = copy.dismiss;
+        nowBadge.textContent = copy.now;
+
+        zoneChoices.querySelectorAll(".zone-choice").forEach(function (label) {
+          const radio = label.querySelector("input");
+          const zone = zoneOrder.find(function (entry) { return entry.id === radio.value; });
+          const name = label.querySelector(".zone-choice-name");
+          name.textContent = zoneShortName(zone);
+          name.title = zoneName(zone.id);
+          radio.setAttribute("aria-label", zoneName(zone.id) + " " + zone.offsetLabel);
+        });
+        weekdaysRoot.querySelectorAll(".weekday").forEach(function (button) {
+          const dayIndex = Number(button.dataset.day);
+          button.textContent = copy.weekdayShort[dayIndex];
+          button.setAttribute("aria-label", copy.weekdays[dayIndex]);
+        });
+        worldClockNodes.forEach(function (card) {
+          card.row.querySelector(".timezone-name").textContent = zoneShortName(card.zone);
+          card.track.setAttribute("aria-label", zoneName(card.zone.id) + " " + copy.dayNightAria);
+        });
+        document.getElementById("create-heading").textContent = editingAlarmId ? copy.editAlarm : copy.addAlarm;
+        submitButton.textContent = editingAlarmId ? copy.saveChanges : "＋　" + copy.addAlarm;
+        cancelEditButton.textContent = copy.cancel;
+        if (editingAlarmId) notice.textContent = copy.editNotice;
+        if (ringingAlarm) {
+          document.getElementById("alert-title").textContent = copy.ring + " · " + ringingAlarm.time;
+          document.getElementById("alert-subtitle").textContent =
+            zoneName(ringingAlarm.timezone) + " · " + dayLabel(ringingAlarm.days);
+        }
+        lastTimelineSlot = "";
+        renderClock();
+        renderAlarms();
+      }
+
+      function dayLabel(days) {
+        if (days.length === 0) return text("once");
+        if (days.length === 7) return text("everyDay");
+        const labels = days.slice().sort(function (a, b) { return a - b; })
+          .map(function (day) {
+            return language === "zh" ? "周" + text("weekdayShort")[day] : text("weekdayShort")[day];
+          });
+        return text("weekly") + (language === "zh" ? "：" : ": ") + labels.join(language === "zh" ? "、" : ", ");
+      }
+
+      function wallTimeToInstant(year, month, day, time, timezone) {
+        const timeParts = time.split(":").map(Number);
+        const target = Date.UTC(year, month - 1, day, timeParts[0], timeParts[1]);
+        let guess = target;
+        const guesses = [];
+
+        for (let attempt = 0; attempt < 4; attempt += 1) {
+          guesses.push(guess);
+          const parts = getParts(new Date(guess), timezone);
+          const represented = Date.UTC(
+            Number(parts.year), Number(parts.month) - 1, Number(parts.day),
+            Number(parts.hour), Number(parts.minute), Number(parts.second)
+          );
+          const corrected = target - (represented - guess);
+          if (corrected === guess) break;
+          guess = corrected;
+        }
+
+        function matches(timestamp) {
+          const parts = getParts(new Date(timestamp), timezone);
+          return Number(parts.year) === year && Number(parts.month) === month &&
+            Number(parts.day) === day && Number(parts.hour) === timeParts[0] &&
+            Number(parts.minute) === timeParts[1] && Number(parts.second) === 0;
+        }
+
+        const exactGuesses = guesses.filter(matches);
+        if (exactGuesses.length > 0) return Math.min.apply(null, exactGuesses);
+
+        for (let minute = -180; minute <= 180; minute += 1) {
+          const candidate = guess + minute * 60000;
+          if (matches(candidate)) return candidate;
+        }
+        return null;
+      }
+
+      function getNextOccurrence(alarm, now) {
+        const current = getParts(now, alarm.timezone);
+        const firstDate = Date.UTC(Number(current.year), Number(current.month) - 1, Number(current.day));
+        for (let offset = 0; offset <= 7; offset += 1) {
+          const date = new Date(firstDate + offset * 86400000);
+          if (alarm.days.length > 0 && alarm.days.indexOf(date.getUTCDay()) === -1) continue;
+          const year = date.getUTCFullYear();
+          const month = date.getUTCMonth() + 1;
+          const day = date.getUTCDate();
+          const instant = wallTimeToInstant(year, month, day, alarm.time, alarm.timezone);
+          if (instant !== null && instant >= now.getTime()) {
+            return { instant: instant, year: year, month: month, day: day };
+          }
+        }
+        return null;
+      }
+
+      function createAlarmWeekdayGrid(alarm) {
+        const grid = document.createElement("div");
+        grid.className = "alarm-weekdays";
+        const order = [1, 2, 3, 4, 5, 6, 0];
+        order.forEach(function (dayIndex, index) {
+          const day = document.createElement("div");
+          day.className = "alarm-day" + (dayIndex === 6 ? " saturday" : "") + (dayIndex === 0 ? " sunday" : "");
+          day.setAttribute("aria-label", text("weekdays")[dayIndex] + text("dayStatusSeparator") +
+            (alarm.days.indexOf(dayIndex) !== -1 ? text("selectedDay") : text("unselectedDay")));
+          day.title = day.getAttribute("aria-label");
+          const letter = document.createElement("span");
+          letter.textContent = text("alarmWeekdayLetters")[index];
+          const check = document.createElement("span");
+          check.className = "alarm-day-check";
+          check.textContent = alarm.days.indexOf(dayIndex) !== -1 ? "✓" : "";
+          day.append(letter, check);
+          grid.appendChild(day);
+        });
+        return grid;
+      }
+
+      function createAlarmZoneGrid(alarm, occurrence) {
+        const grid = document.createElement("div");
+        grid.className = "alarm-zone-grid";
+        const sourceDate = occurrence && Date.UTC(occurrence.year, occurrence.month - 1, occurrence.day);
+        const instant = occurrence ? new Date(occurrence.instant) : null;
+
+        zoneOrder.forEach(function (zone) {
+          const cell = document.createElement("div");
+          cell.className = "alarm-zone-cell" + (zone.id === alarm.timezone ? " source-zone" : "");
+          const name = document.createElement("div");
+          name.className = "alarm-zone-name";
+          name.textContent = zoneShortName(zone) + (zone.id === alarm.timezone ? " · " + text("alarmZone") : "");
+          const time = document.createElement("div");
+          time.className = "alarm-zone-time";
+          const shift = document.createElement("div");
+          shift.className = "alarm-zone-shift";
+          if (instant) {
+            const parts = getParts(instant, zone.id);
+            time.textContent = parts.hour + ":" + parts.minute;
+            const targetDate = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day));
+            const dayDifference = Math.round((targetDate - sourceDate) / 86400000);
+            shift.textContent = dayDifference === 0 ? "" : (dayDifference > 0 ? text("nextDay") : text("previousDay"));
+          } else {
+            time.textContent = "—";
+          }
+          cell.append(name, time, shift);
+          grid.appendChild(cell);
+        });
+        return grid;
+      }
+
+      function renderAlarms() {
+        alarmList.replaceChildren();
+        document.getElementById("alarm-count").textContent = alarms.length + " " +
+          (language === "zh" ? text("alarmsCount") : (alarms.length === 1 ? text("alarm") : text("alarmsCount")));
+        if (alarms.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty-state";
+          empty.innerHTML = '<span class="empty-icon" aria-hidden="true">◷</span>' +
+            text("emptyTitle") + "<br>" + text("emptyBody");
+          alarmList.appendChild(empty);
+          return;
+        }
+
+        alarms.forEach(function (alarm) {
+          const item = document.createElement("div");
+          item.className = "alarm-item" + (alarm.enabled ? "" : " disabled");
+          const top = document.createElement("div");
+          top.className = "alarm-top";
+
+          const main = document.createElement("div");
+          main.className = "alarm-main";
+          const time = document.createElement("div");
+          time.className = "alarm-time";
+          time.textContent = alarm.time;
+          const meta = document.createElement("div");
+          meta.className = "alarm-meta";
+          meta.textContent = zoneName(alarm.timezone) + (language === "zh" ? "时间 · " : " time · ") + dayLabel(alarm.days);
+          main.append(time, meta);
+
+          const actions = document.createElement("div");
+          actions.className = "alarm-actions";
+          const edit = document.createElement("button");
+          edit.className = "edit-button";
+          edit.type = "button";
+          edit.textContent = text("edit");
+          edit.setAttribute("aria-label", text("edit") + " " + alarm.time + " " + text("ring").toLowerCase());
+          edit.addEventListener("click", function () {
+            editingAlarmId = alarm.id;
+            timeInput.value = alarm.time;
+            const zoneRadio = zoneChoices.querySelector('input[value="' + alarm.timezone + '"]');
+            if (zoneRadio) zoneRadio.checked = true;
+            weekdaysRoot.querySelectorAll(".weekday").forEach(function (button) {
+              button.setAttribute("aria-pressed", String(alarm.days.indexOf(Number(button.dataset.day)) !== -1));
+            });
+            document.getElementById("create-heading").textContent = text("editAlarm");
+            submitButton.textContent = text("saveChanges");
+            cancelEditButton.hidden = false;
+            cancelEditButton.textContent = text("cancel");
+            notice.textContent = text("editNotice");
+            timeInput.focus();
+          });
+          const toggle = document.createElement("button");
+          toggle.className = "toggle";
+          toggle.type = "button";
+          toggle.setAttribute("aria-label", (alarm.enabled ? text("disable") : text("enable")) +
+            " " + alarm.time + " " + text("ring").toLowerCase());
+          toggle.title = alarm.enabled ? text("disable") : text("enable");
+          toggle.setAttribute("aria-pressed", String(alarm.enabled));
+          toggle.addEventListener("click", function () {
+            alarm.enabled = !alarm.enabled;
+            saveAlarms();
+            renderAlarms();
+          });
+          const remove = document.createElement("button");
+          remove.className = "delete-button";
+          remove.type = "button";
+          remove.setAttribute("aria-label", text("delete") + " " + alarm.time + " " + text("ring").toLowerCase());
+          remove.title = text("delete");
+          remove.textContent = "×";
+          remove.addEventListener("click", function () {
+            alarms = alarms.filter(function (entry) { return entry.id !== alarm.id; });
+            saveAlarms();
+            renderAlarms();
+          });
+          actions.append(edit, toggle, remove);
+          top.append(main, actions);
+          item.append(top, createAlarmWeekdayGrid(alarm), createAlarmZoneGrid(alarm, getNextOccurrence(alarm, new Date())));
+          alarmList.appendChild(item);
+        });
+      }
+
+      function ring(alarm) {
+        ringingAlarm = alarm;
+        document.getElementById("alert-title").textContent = text("ring") + " · " + alarm.time;
+        document.getElementById("alert-subtitle").textContent = zoneName(alarm.timezone) + " · " + dayLabel(alarm.days);
+        alertBox.classList.add("visible");
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) {
+            audioContext = audioContext || new AudioContextClass();
+            if (audioContext.state === "suspended") audioContext.resume();
+            stopSound();
+            soundTimer = window.setInterval(function () {
+              const oscillator = audioContext.createOscillator();
+              const gain = audioContext.createGain();
+              oscillator.frequency.value = 880;
+              gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.16, audioContext.currentTime + 0.02);
+              gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.32);
+              oscillator.connect(gain);
+              gain.connect(audioContext.destination);
+              oscillator.start();
+              oscillator.stop(audioContext.currentTime + 0.33);
+            }, 850);
+          }
+        } catch (error) {
+          console.error(text("playError"), error);
+        }
+      }
+
+      function stopSound() {
+        if (soundTimer) window.clearInterval(soundTimer);
+        soundTimer = undefined;
+      }
+
+      document.getElementById("dismiss-alarm").addEventListener("click", function () {
+        stopSound();
+        ringingAlarm = null;
+        alertBox.classList.remove("visible");
+      });
+
+      function resetForm(clearNotice) {
+        alarmForm.reset();
+        editingAlarmId = null;
+        weekdaysRoot.querySelectorAll(".weekday").forEach(function (button) {
+          button.setAttribute("aria-pressed", "false");
+        });
+        document.getElementById("create-heading").textContent = text("addAlarm");
+        submitButton.textContent = "＋　" + text("addAlarm");
+        cancelEditButton.textContent = text("cancel");
+        cancelEditButton.hidden = true;
+        if (clearNotice !== false) notice.textContent = "";
+      }
+
+      cancelEditButton.addEventListener("click", function () {
+        resetForm(true);
+      });
+      document.getElementById("language-toggle").addEventListener("click", function () {
+        applyLanguage(language === "en" ? "zh" : "en");
+      });
+      window.addEventListener("resize", function () {
+        positionNowMarker(new Date());
+      });
+
+      alarmForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        notice.textContent = "";
+        if (!timeInput.value) {
+          notice.textContent = text("chooseTime");
+          timeInput.focus();
+          return;
+        }
+        const days = Array.from(weekdaysRoot.querySelectorAll('[aria-pressed="true"]'))
+          .map(function (button) { return Number(button.dataset.day); });
+        const selectedZone = zoneChoices.querySelector('input[name="alarm-timezone"]:checked');
+        if (!selectedZone) {
+          notice.textContent = text("chooseTimeZone");
+          return;
+        }
+        if (editingAlarmId) {
+          const alarm = alarms.find(function (entry) { return entry.id === editingAlarmId; });
+          if (!alarm) {
+            notice.textContent = text("alarmNotFound");
+            return;
+          }
+          alarm.time = timeInput.value;
+          alarm.days = days;
+          alarm.timezone = selectedZone.value;
+        } else {
+          alarms.unshift({
+            id: (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : String(Date.now()) + Math.random(),
+            time: timeInput.value,
+            days: days,
+            timezone: selectedZone.value,
+            enabled: true
+          });
+        }
+        const saved = saveAlarms();
+        renderAlarms();
+        resetForm(saved);
+      });
+
+      function checkAlarms() {
+        const now = new Date();
+        alarms.slice().forEach(function (alarm) {
+          if (!alarm.enabled) return;
+          const parts = getParts(now, alarm.timezone);
+          if (parts.hour + ":" + parts.minute !== alarm.time || Number(parts.second) > 1) return;
+          const dayIndex = weekdayIndexes[parts.weekday];
+          if (alarm.days.length > 0 && alarm.days.indexOf(dayIndex) === -1) return;
+          const occurrence = alarm.id + ":" + parts.year + "-" + parts.month + "-" + parts.day;
+          if (firedToday.has(occurrence)) return;
+          firedToday.add(occurrence);
+          ring(alarm);
+          if (alarm.days.length === 0) {
+            alarm.enabled = false;
+            saveAlarms();
+            renderAlarms();
+          }
+        });
+      }
+
+      applyLanguage("en");
+      window.setInterval(function () {
+        renderClock();
+        checkAlarms();
+      }, 1000);
+    }());
+  </script>
+</body>
+</html>
