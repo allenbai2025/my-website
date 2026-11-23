@@ -73,12 +73,14 @@
     }
     .world-heading { margin: 0; font-size: 14px; font-weight: 650; }
     .world-caption { margin: 3px 0 8px; color: var(--muted); font-size: 9px; }
-    .world-timeline { --label-width: 160px; position: relative; display: grid; gap: 2px; }
-    .timezone-row { display: grid; grid-template-columns: var(--label-width) minmax(0, 1fr); gap: 12px; align-items: center; min-height: 20px; }
-    .timezone-info { display: flex; min-width: 0; align-items: baseline; gap: 7px; text-align: left; white-space: nowrap; }
+    .world-timeline { position: relative; display: grid; gap: 2px; }
+    .timezone-row { display: grid; grid-template-columns: minmax(105px, 1.05fr) minmax(112px, 1.05fr) minmax(82px, auto) minmax(0, 2fr); gap: 6px; align-items: center; min-height: 20px; }
+    .timezone-cell { min-width: 0; padding: 2px 6px; border: 1px solid rgba(255, 255, 255, .12); border-radius: 4px; background: rgba(15, 21, 33, .38); white-space: nowrap; }
     .timezone-name { overflow: hidden; color: #e8eaf2; font-size: 11px; font-weight: 650; text-overflow: ellipsis; }
+    .timezone-info { display: flex; align-items: baseline; gap: 5px; }
     .timezone-time { color: #fff; font-size: 13px; font-weight: 450; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
-    .timezone-standard { color: var(--muted); font-size: 9px; }
+    .timezone-standard { color: #e8eaf2; font-size: 9px; }
+    .timezone-offset { color: var(--muted); font-size: 9px; }
     .timeline-area { min-width: 0; }
     .day-track { position: relative; height: 14px; border: 1px solid rgba(255, 255, 255, .16); border-radius: 999px; background-color: #11151f; }
     .date-marker { position: absolute; z-index: 4; top: -5px; width: 0; height: 20px; }
@@ -89,17 +91,18 @@
       z-index: 3;
       top: 3px;
       bottom: 0;
-      left: calc(var(--label-width) + 12px + (100% - var(--label-width) - 12px) / 2);
-      width: 1px;
-      background: rgba(255, 255, 255, .94);
-      box-shadow: 0 0 3px rgba(255, 255, 255, .8);
+      left: 0;
+      width: 5px;
+      background: #ff4d5f;
+      box-shadow: 0 0 4px rgba(255, 77, 95, .8);
+      transform: translateX(-50%);
       pointer-events: none;
     }
     .now-badge {
       position: absolute;
       z-index: 3;
       top: -12px;
-      left: calc(var(--label-width) + 17px + (100% - var(--label-width) - 17px) / 2);
+      left: 0;
       padding: 2px 5px;
       border-radius: 4px;
       background: #e9e9ef;
@@ -229,13 +232,13 @@
       .header-actions { gap: 7px; }
       .local-note { max-width: 110px; text-align: right; line-height: 1.4; font-size: 10px; }
       .world-panel { padding: 12px 10px; border-radius: 20px; }
-      .world-timeline { --label-width: 144px; gap: 2px; }
-      .timezone-row { gap: 8px; }
-      .timezone-info { gap: 5px; }
+      .world-timeline { gap: 2px; }
+      .timezone-row { grid-template-columns: minmax(70px, 1fr) minmax(78px, 1fr) 58px minmax(35px, 1.4fr); gap: 4px; }
+      .timezone-cell { padding: 2px 4px; }
       .timezone-name { font-size: 9px; }
-      .timezone-time { font-size: 12px; }
-      .timezone-standard { font-size: 8px; }
-      .now-line, .now-badge { left: calc(var(--label-width) + 8px + (100% - var(--label-width) - 8px) / 2); }
+      .timezone-info { gap: 3px; }
+      .timezone-time { font-size: 10px; }
+      .timezone-standard, .timezone-offset { font-size: 8px; }
       .section-heading { margin-top: 12px; }
       .content-grid { grid-template-columns: 1fr; }
       .zone-fieldset { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
@@ -318,7 +321,7 @@
         { id: "America/Denver", name: "El Paso", nameZh: "埃尔帕索", shortName: "El Paso", shortNameZh: "埃尔帕索", standardOffset: -7, offsetLabel: "UTC−07:00", offsetShort: "UTC−7" },
         { id: "America/Chicago", name: "Houston", nameZh: "休斯顿", shortName: "HOU", shortNameZh: "休斯顿", standardOffset: -6, offsetLabel: "UTC−06:00", offsetShort: "UTC−6" },
         { id: "America/New_York", name: "New York", nameZh: "纽约", shortName: "NYC", shortNameZh: "纽约", standardOffset: -5, offsetLabel: "UTC−05:00", offsetShort: "UTC−5" },
-        { id: "Asia/Taipei", name: "Taipei", nameZh: "台北", shortName: "TPE", shortNameZh: "台北", standardOffset: 8, offsetLabel: "UTC+08:00", offsetShort: "UTC+8" }
+        { id: "Asia/Taipei", name: "Taipei", nameZh: "台北", shortName: "TPE", shortNameZh: "台北", timeZoneAbbreviation: "TST", standardOffset: 8, offsetLabel: "UTC+08:00", offsetShort: "UTC+8" }
       ].sort(function (a, b) { return b.standardOffset - a.standardOffset; });
       const zones = {};
       zoneOrder.forEach(function (zone) { zones[zone.id] = zone.name; });
@@ -470,16 +473,18 @@
       const worldClockNodes = zoneOrder.map(function (zone) {
         const row = document.createElement("article");
         row.className = "timezone-row";
-        const info = document.createElement("div");
-        info.className = "timezone-info";
         const name = document.createElement("div");
-        name.className = "timezone-name";
-        name.textContent = zoneShortName(zone);
+        name.className = "timezone-cell timezone-name";
+        name.textContent = zoneName(zone.id);
         const time = document.createElement("div");
-        time.className = "timezone-time";
+        time.className = "timezone-cell timezone-time";
+        const info = document.createElement("div");
+        info.className = "timezone-cell timezone-info";
         const standard = document.createElement("div");
         standard.className = "timezone-standard";
-        info.append(name, time, standard);
+        const offset = document.createElement("div");
+        offset.className = "timezone-offset";
+        info.append(standard, offset);
 
         const area = document.createElement("div");
         area.className = "timeline-area";
@@ -488,9 +493,9 @@
         track.setAttribute("aria-label", zone.name + " " + text("dayNightAria"));
         area.append(track);
         row.dataset.timezone = zone.id;
-        row.append(info, area);
+        row.append(name, info, time, area);
         worldTimeline.appendChild(row);
-        return { row: row, time: time, standard: standard, track: track, zone: zone };
+        return { row: row, name: name, time: time, standard: standard, offset: offset, track: track, zone: zone };
       });
 
       zoneOrder.forEach(function (zone) {
@@ -646,9 +651,18 @@
           const timezone = card.zone.id;
           const parts = getParts(now, timezone);
           card.time.textContent = parts.hour + ":" + parts.minute + ":" + parts.second;
-          card.standard.textContent = new Intl.DateTimeFormat("en-US", {
+          const timeZoneAbbreviation = new Intl.DateTimeFormat("en-US", {
             timeZone: timezone,
             timeZoneName: "short"
+          }).formatToParts(now).filter(function (part) {
+            return part.type === "timeZoneName";
+          })[0].value;
+          card.standard.textContent = timeZoneAbbreviation.indexOf("GMT") === 0
+            ? (card.zone.timeZoneAbbreviation || timeZoneAbbreviation)
+            : timeZoneAbbreviation;
+          card.offset.textContent = new Intl.DateTimeFormat("en-US", {
+            timeZone: timezone,
+            timeZoneName: "shortOffset"
           }).formatToParts(now).filter(function (part) {
             return part.type === "timeZoneName";
           })[0].value;
@@ -728,7 +742,7 @@
           button.setAttribute("aria-label", copy.weekdays[dayIndex]);
         });
         worldClockNodes.forEach(function (card) {
-          card.row.querySelector(".timezone-name").textContent = zoneShortName(card.zone);
+          card.name.textContent = zoneName(card.zone.id);
           card.track.setAttribute("aria-label", zoneName(card.zone.id) + " " + copy.dayNightAria);
         });
         document.getElementById("create-heading").textContent = editingAlarmId ? copy.editAlarm : copy.addAlarm;
