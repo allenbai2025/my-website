@@ -73,11 +73,25 @@
     }
     .world-heading { margin: 0; font-size: 14px; font-weight: 650; }
     .world-caption { margin: 3px 0 8px; color: var(--muted); font-size: 9px; }
-    .world-timeline { position: relative; display: grid; gap: 2px; }
-    .timezone-row { display: grid; grid-template-columns: minmax(105px, 1.05fr) minmax(112px, 1.05fr) minmax(82px, auto) minmax(0, 2fr); gap: 6px; align-items: center; min-height: 20px; }
-    .timezone-cell { min-width: 0; padding: 2px 6px; border: 1px solid rgba(255, 255, 255, .12); border-radius: 4px; background: rgba(15, 21, 33, .38); white-space: nowrap; }
+    .market-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0 0 4px; }
+    .market-legend-item { display: inline-flex; align-items: center; gap: 4px; color: #c7ccda; font-size: 8px; white-space: nowrap; }
+    .market-swatch { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 2px; }
+    .market-calendar-note { margin: 0 0 6px; color: var(--muted); font-size: 8px; }
+    .world-timeline { position: relative; display: grid; grid-template-columns: max-content max-content max-content max-content max-content minmax(0, 1fr); column-gap: 4px; row-gap: 2px; }
+    .timezone-row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; min-height: 20px; }
+    .exchange-row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; min-height: 8px; }
+    .exchange-track { position: relative; grid-column: 6; height: 8px; overflow: hidden; }
+    .exchange-segment { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; overflow: hidden; padding: 0 2px; border-radius: 2px; color: #101522; font-size: 7px; font-weight: 750; line-height: 1; white-space: nowrap; }
+    .timezone-date { min-width: 0; padding: 2px 3px; border: 1px solid rgba(255, 255, 255, .12); border-radius: 4px; background: rgba(15, 21, 33, .38); text-align: center; font-size: 10px; font-weight: 650; white-space: nowrap; }
+    .timezone-date.date-color-0 { color: #7ec8e3; }
+    .timezone-date.date-color-1 { color: #e8734a; }
+    .timezone-date.date-color-2 { color: #8bb8e0; }
+    .timezone-date.date-color-3 { color: #9da5ba; }
+    .timezone-date.date-color-4 { color: #a0d4b0; }
+    .timezone-date.date-color-5 { color: #d4b8e0; }
+    .timezone-date.date-color-6 { color: #e0c88b; }
+    .timezone-cell { min-width: 0; padding: 2px 5px; border: 1px solid rgba(255, 255, 255, .12); border-radius: 4px; background: rgba(15, 21, 33, .38); white-space: nowrap; }
     .timezone-name { overflow: hidden; color: #e8eaf2; font-size: 11px; font-weight: 650; text-overflow: ellipsis; }
-    .timezone-info { display: flex; align-items: baseline; gap: 5px; }
     .timezone-time { color: #fff; font-size: 13px; font-weight: 450; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
     .timezone-standard { color: #e8eaf2; font-size: 9px; }
     .timezone-offset { color: var(--muted); font-size: 9px; }
@@ -85,14 +99,17 @@
     .day-track { position: relative; height: 14px; border: 1px solid rgba(255, 255, 255, .16); border-radius: 999px; background-color: #11151f; }
     .date-marker { position: absolute; z-index: 4; top: -5px; width: 0; height: 20px; }
     .date-marker::before { position: absolute; top: 0; left: 50%; border-top: 6px solid #fff; border-right: 5px solid transparent; border-left: 5px solid transparent; content: ""; filter: drop-shadow(0 1px 1px #000); transform: translateX(-50%); }
-    .date-marker-label { position: absolute; top: 3px; left: 50%; color: #fff; font-size: 9px; font-weight: 750; line-height: 1; white-space: nowrap; -webkit-text-stroke: 1.5px #090a0d; paint-order: stroke fill; text-shadow: 0 1px 1px #090a0d; }
+    .date-marker::after { position: absolute; top: 5px; left: -2px; width: 5px; height: 14px; border-radius: 1px; background: #fff; box-shadow: 0 0 2px rgba(0, 0, 0, .85); content: ""; }
+    .date-marker.edge-start::after { left: 0; }
+    .date-marker.edge-end::after { left: -5px; }
+    .date-marker-label { position: absolute; top: 3px; left: calc(50% + 2em); color: #fff; font-size: 9px; font-weight: 750; line-height: 1; white-space: nowrap; -webkit-text-stroke: 1.5px #090a0d; paint-order: stroke fill; text-shadow: 0 1px 1px #090a0d; }
     .now-line {
       position: absolute;
       z-index: 3;
       top: 3px;
       bottom: 0;
       left: 0;
-      width: 5px;
+      width: 2px;
       background: #ff4d5f;
       box-shadow: 0 0 4px rgba(255, 77, 95, .8);
       transform: translateX(-50%);
@@ -233,11 +250,13 @@
       .local-note { max-width: 110px; text-align: right; line-height: 1.4; font-size: 10px; }
       .world-panel { padding: 12px 10px; border-radius: 20px; }
       .world-timeline { gap: 2px; }
-      .timezone-row { grid-template-columns: minmax(70px, 1fr) minmax(78px, 1fr) 58px minmax(35px, 1.4fr); gap: 4px; }
-      .timezone-cell { padding: 2px 4px; }
-      .timezone-name { font-size: 9px; }
-      .timezone-info { gap: 3px; }
-      .timezone-time { font-size: 10px; }
+      .world-timeline { column-gap: 2px; }
+      .market-legend { gap: 4px 7px; }
+      .market-legend-item { font-size: 7px; }
+      .timezone-cell { padding: 2px 3px; }
+      .timezone-name { font-size: 8px; }
+      .timezone-time { padding-right: 2px; padding-left: 2px; font-size: 9px; }
+      .timezone-date { padding-right: 2px; padding-left: 2px; font-size: 9px; }
       .timezone-standard, .timezone-offset { font-size: 8px; }
       .section-heading { margin-top: 12px; }
       .content-grid { grid-template-columns: 1fr; }
@@ -266,7 +285,9 @@
 
     <section class="world-panel" id="world-panel" aria-label="World clocks">
       <h1 class="world-heading" id="world-heading">World clock</h1>
-      <p class="world-caption" id="world-caption">36-hour window · Night: dark · Weekday: yellow · Sat: green · Sun: red</p>
+      <p class="world-caption" id="world-caption">36-hour window · Night: dark · Weekday: white · Sat: green · Sun: red</p>
+      <div class="market-legend" id="market-legend" aria-label="Stock market sessions"></div>
+      <p class="market-calendar-note" id="market-calendar-note">Market holidays are stored offline and need yearly updates.</p>
       <div class="world-timeline" id="world-timeline">
         <div class="now-badge" aria-hidden="true">NOW</div>
         <div class="now-line" aria-hidden="true"></div>
@@ -323,6 +344,38 @@
         { id: "America/New_York", name: "New York", nameZh: "纽约", shortName: "NYC", shortNameZh: "纽约", standardOffset: -5, offsetLabel: "UTC−05:00", offsetShort: "UTC−5" },
         { id: "Asia/Taipei", name: "Taipei", nameZh: "台北", shortName: "TPE", shortNameZh: "台北", timeZoneAbbreviation: "TST", standardOffset: 8, offsetLabel: "UTC+08:00", offsetShort: "UTC+8" }
       ].sort(function (a, b) { return b.standardOffset - a.standardOffset; });
+      const marketSessions = [
+        { id: "twse", market: "twse", zone: "Asia/Taipei", label: { en: "Taiwan stocks", zh: "台股" }, legend: { en: "Taiwan 09:00–13:30", zh: "台股 09:00–13:30" }, color: "#54d6ad", start: 540, end: 810, segment: { en: "TWSE", zh: "台股" } },
+        { id: "china-am", market: "china", zone: "Asia/Shanghai", label: { en: "China A-shares morning", zh: "大陆 A 股早盘" }, legend: { en: "A-shares morning 09:30–11:30", zh: "A 股早盘 09:30–11:30" }, color: "#67a8ff", start: 570, end: 690, segment: { en: "AM", zh: "A股早" } },
+        { id: "china-pm", market: "china", zone: "Asia/Shanghai", label: { en: "China A-shares afternoon", zh: "大陆 A 股午盘" }, legend: { en: "A-shares afternoon 13:00–15:00", zh: "A 股午盘 13:00–15:00" }, color: "#a48bff", start: 780, end: 900, segment: { en: "PM", zh: "A股午" } },
+        { id: "ny-pre", market: "nyse", zone: "America/New_York", label: { en: "U.S. pre-market", zh: "美股盘前" }, legend: { en: "U.S. pre-market 04:00–09:30", zh: "美股盘前 04:00–09:30" }, color: "#5eb4ff", start: 240, end: 570, segment: { en: "Pre", zh: "盘前" } },
+        { id: "ny-core", market: "nyse", zone: "America/New_York", label: { en: "U.S. regular session", zh: "美股主盘" }, legend: { en: "U.S. regular 09:30–16:00", zh: "美股主盘 09:30–16:00" }, color: "#ffc857", start: 570, end: 960, segment: { en: "Regular", zh: "主盘" } },
+        { id: "ny-post", market: "nyse", zone: "America/New_York", label: { en: "U.S. after-hours", zh: "美股盘后" }, legend: { en: "U.S. after-hours 16:00–20:00", zh: "美股盘后 16:00–20:00" }, color: "#ff8a65", start: 960, end: 1200, segment: { en: "After", zh: "盘后" } },
+        { id: "ny-overnight", market: "nyse", zone: "America/New_York", label: { en: "U.S. overnight (select platforms)", zh: "美股隔夜（部分平台）" }, legend: { en: "Overnight 20:00–04:00 · select platforms", zh: "隔夜 20:00–04:00 · 部分平台" }, color: "#c77dff", start: 1200, end: 240, previousDay: true, segment: { en: "Overnight", zh: "隔夜" } }
+      ];
+      const marketLanes = [
+        { id: "twse", market: "twse", parentZone: "Asia/Taipei", label: { en: "Taiwan stocks", zh: "台股" }, sessions: [marketSessions[0]] },
+        { id: "china", market: "china", parentZone: "Asia/Taipei", label: { en: "China A-shares", zh: "大陆 A 股" }, sessions: marketSessions.filter(function (session) { return session.market === "china"; }) },
+        { id: "nyse", market: "nyse", parentZone: "America/New_York", label: { en: "U.S. stock sessions", zh: "美股各时段" }, sessions: marketSessions.filter(function (session) { return session.market === "nyse"; }) }
+      ];
+      const marketHolidayDates = {
+        twse: [
+          "2026-01-01", "2026-02-12", "2026-02-13", "2026-02-15", "2026-02-16", "2026-02-17", "2026-02-18", "2026-02-19", "2026-02-20", "2026-02-27", "2026-02-28",
+          "2026-04-03", "2026-04-04", "2026-04-05", "2026-04-06", "2026-05-01", "2026-06-19", "2026-09-25", "2026-09-28", "2026-10-09", "2026-10-10", "2026-10-25", "2026-10-26", "2026-12-25",
+          "2027-01-01", "2027-02-02", "2027-02-03", "2027-02-04", "2027-02-05", "2027-02-06", "2027-02-07", "2027-02-08", "2027-02-09", "2027-02-10", "2027-02-28", "2027-03-01",
+          "2027-04-04", "2027-04-05", "2027-04-06", "2027-04-30", "2027-05-01", "2027-06-09", "2027-09-15", "2027-09-28", "2027-10-10", "2027-10-11", "2027-10-25", "2027-12-24", "2027-12-25", "2027-12-31"
+        ],
+        china: [
+          "2026-01-01", "2026-01-02", "2026-02-16", "2026-02-17", "2026-02-18", "2026-02-19", "2026-02-20", "2026-04-06",
+          "2026-05-01", "2026-05-04", "2026-05-05", "2026-06-19", "2026-09-25", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-06", "2026-10-07"
+        ],
+        nyse: [
+          "2026-01-01", "2026-01-19", "2026-02-16", "2026-04-03", "2026-05-25", "2026-06-19", "2026-07-03", "2026-09-07", "2026-11-26", "2026-12-25",
+          "2027-01-01", "2027-01-18", "2027-02-15", "2027-03-26", "2027-05-31", "2027-06-18", "2027-07-05", "2027-09-06", "2027-11-25", "2027-12-24",
+          "2028-01-17", "2028-02-21", "2028-04-14", "2028-05-29", "2028-06-19", "2028-07-04", "2028-09-04", "2028-11-23", "2028-12-25"
+        ]
+      };
+      const nyseEarlyCloses = new Set(["2026-11-27", "2026-12-24", "2027-11-26", "2028-07-03", "2028-11-24"]);
       const zones = {};
       zoneOrder.forEach(function (zone) { zones[zone.id] = zone.name; });
       const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -333,7 +386,9 @@
           title: "World Clock & Alarms",
           brandNote: "Plan across time zones",
           worldClock: "World clock",
-          worldCaption: "36-hour window · Night: dark · Weekday: yellow · Sat: green · Sun: red",
+          worldCaption: "36-hour window · Night: dark · Weekday: white · Sat: green · Sun: red",
+          marketLegendAria: "Stock market trading sessions",
+          marketCalendarNote: "Offline holidays: Taiwan 2026–27, mainland A-shares 2026, U.S. exchanges 2026–28. U.S. extended hours vary by venue; overnight is platform-dependent. Update dates yearly.",
           worldAria: "World clocks",
           dayNightAria: "day and night timeline",
           now: "NOW",
@@ -388,7 +443,9 @@
           title: "世界时钟与闹钟",
           brandNote: "跨时区安排时间",
           worldClock: "世界时钟",
-          worldCaption: "36 小时范围 · 夜间：深色 · 工作日：浅黄 · 周六：浅绿 · 周日：浅红",
+          worldCaption: "36 小时范围 · 夜间：深色 · 工作日：白色 · 周六：浅绿 · 周日：浅红",
+          marketLegendAria: "股票市场交易时段",
+          marketCalendarNote: "离线休市日历：台股 2026–27、大陆 A 股 2026、美股 2026–28；日期需每年更新。美股盘前/盘后依交易场所而异，隔夜仅部分平台提供。",
           worldAria: "世界时钟",
           dayNightAria: "昼夜时间条",
           now: "现在",
@@ -461,6 +518,8 @@
       const cancelEditButton = document.getElementById("cancel-edit");
       const nowLine = worldTimeline.querySelector(".now-line");
       const nowBadge = worldTimeline.querySelector(".now-badge");
+      const marketLegend = document.getElementById("market-legend");
+      const marketCalendarNote = document.getElementById("market-calendar-note");
       let alarms = loadAlarms();
       let editingAlarmId = null;
       let audioContext;
@@ -468,23 +527,27 @@
       let ringingAlarm = null;
       const firedToday = new Set();
       let lastTimelineSlot = "";
+      let lastClockMinute = "";
       let timelineStart = 0;
+      const exchangeClockNodes = [];
 
       const worldClockNodes = zoneOrder.map(function (zone) {
         const row = document.createElement("article");
         row.className = "timezone-row";
+        const dateCell = document.createElement("div");
+        dateCell.className = "timezone-date";
         const name = document.createElement("div");
         name.className = "timezone-cell timezone-name";
         name.textContent = zoneName(zone.id);
         const time = document.createElement("div");
         time.className = "timezone-cell timezone-time";
-        const info = document.createElement("div");
-        info.className = "timezone-cell timezone-info";
+        const hourMinute = document.createElement("span");
+        const seconds = document.createElement("span");
+        time.append(hourMinute, document.createTextNode(":"), seconds);
         const standard = document.createElement("div");
-        standard.className = "timezone-standard";
+        standard.className = "timezone-cell timezone-standard";
         const offset = document.createElement("div");
-        offset.className = "timezone-offset";
-        info.append(standard, offset);
+        offset.className = "timezone-cell timezone-offset";
 
         const area = document.createElement("div");
         area.className = "timeline-area";
@@ -493,9 +556,22 @@
         track.setAttribute("aria-label", zone.name + " " + text("dayNightAria"));
         area.append(track);
         row.dataset.timezone = zone.id;
-        row.append(name, info, time, area);
+        row.append(name, standard, offset, dateCell, time, area);
         worldTimeline.appendChild(row);
-        return { row: row, name: name, time: time, standard: standard, offset: offset, track: track, zone: zone };
+        marketLanes.filter(function (lane) {
+          return lane.parentZone === zone.id;
+        }).forEach(function (lane) {
+          const exchangeRow = document.createElement("div");
+          exchangeRow.className = "exchange-row";
+          exchangeRow.hidden = true;
+          exchangeRow.setAttribute("aria-label", lane.label.en);
+          const exchangeTrack = document.createElement("div");
+          exchangeTrack.className = "exchange-track";
+          exchangeRow.appendChild(exchangeTrack);
+          worldTimeline.appendChild(exchangeRow);
+          exchangeClockNodes.push({ row: exchangeRow, track: exchangeTrack, lane: lane });
+        });
+        return { row: row, date: dateCell, name: name, time: time, hourMinute: hourMinute, seconds: seconds, standard: standard, offset: offset, track: track, zone: zone };
       });
 
       zoneOrder.forEach(function (zone) {
@@ -580,6 +656,120 @@
         return result;
       }
 
+      const marketHolidaySets = {
+        twse: new Set(marketHolidayDates.twse),
+        china: new Set(marketHolidayDates.china),
+        nyse: new Set(marketHolidayDates.nyse)
+      };
+
+      function shiftCalendarDate(parts, days) {
+        const date = new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day) + days));
+        return {
+          year: date.getUTCFullYear(),
+          month: date.getUTCMonth() + 1,
+          day: date.getUTCDate()
+        };
+      }
+
+      function calendarDateKey(parts) {
+        return String(parts.year).padStart(4, "0") + "-" +
+          String(parts.month).padStart(2, "0") + "-" + String(parts.day).padStart(2, "0");
+      }
+
+      function marketDateIsOpen(market, date) {
+        const weekday = new Date(Date.UTC(date.year, date.month - 1, date.day)).getUTCDay();
+        return weekday !== 0 && weekday !== 6 && !marketHolidaySets[market].has(calendarDateKey(date));
+      }
+
+      function instantAtMarketMinute(date, minute, timezone) {
+        const adjustedDate = shiftCalendarDate(date, Math.floor(minute / 1440));
+        const minuteOfDay = ((minute % 1440) + 1440) % 1440;
+        const hours = String(Math.floor(minuteOfDay / 60)).padStart(2, "0");
+        const minutes = String(minuteOfDay % 60).padStart(2, "0");
+        return wallTimeToInstant(adjustedDate.year, adjustedDate.month, adjustedDate.day, hours + ":" + minutes, timezone);
+      }
+
+      function renderMarketLegend() {
+        marketLegend.replaceChildren();
+        marketLegend.setAttribute("aria-label", text("marketLegendAria"));
+        marketSessions.forEach(function (session) {
+          const item = document.createElement("span");
+          item.className = "market-legend-item";
+          const swatch = document.createElement("span");
+          swatch.className = "market-swatch";
+          swatch.style.backgroundColor = session.color;
+          swatch.setAttribute("aria-hidden", "true");
+          const label = document.createElement("span");
+          label.textContent = session.legend[language];
+          item.append(swatch, label);
+          marketLegend.appendChild(item);
+        });
+      }
+
+      function renderMarketSessionBars(start, end) {
+        exchangeClockNodes.forEach(function (clock) {
+          const segments = [];
+          clock.lane.sessions.forEach(function (session) {
+            const timezone = session.zone;
+            const startDate = shiftCalendarDate(getParts(new Date(start - 2 * 86400000), timezone), 0);
+            for (let dayOffset = 0; dayOffset < 7; dayOffset += 1) {
+              const sessionDate = shiftCalendarDate(startDate, dayOffset);
+              if (!marketDateIsOpen(session.market, sessionDate)) continue;
+
+              let sessionStartMinute = session.start;
+              let sessionEndMinute = session.end;
+              const sessionDateKey = calendarDateKey(sessionDate);
+              const earlyClose = session.market === "nyse" && nyseEarlyCloses.has(sessionDateKey);
+              if (earlyClose && session.id === "ny-core") sessionEndMinute = 13 * 60;
+              if (earlyClose && session.id === "ny-post") sessionStartMinute = 13 * 60;
+
+              const startDateForSession = session.previousDay ? shiftCalendarDate(sessionDate, -1) : sessionDate;
+              if (session.previousDay) {
+                const priorWeekday = new Date(Date.UTC(startDateForSession.year, startDateForSession.month - 1, startDateForSession.day)).getUTCDay();
+                if (priorWeekday === 6 || (priorWeekday !== 0 && marketHolidaySets[session.market].has(calendarDateKey(startDateForSession)))) continue;
+              }
+              const startInstant = instantAtMarketMinute(startDateForSession, sessionStartMinute, timezone);
+              const endInstant = instantAtMarketMinute(sessionDate, sessionEndMinute, timezone);
+              if (startInstant === null || endInstant === null || endInstant <= start || startInstant >= end) continue;
+
+              const clippedStart = Math.max(startInstant, start);
+              const clippedEnd = Math.min(endInstant, end);
+              if (clippedEnd <= clippedStart) continue;
+              segments.push({
+                session: session,
+                left: (clippedStart - start) / (end - start) * 100,
+                width: (clippedEnd - clippedStart) / (end - start) * 100,
+                date: sessionDateKey,
+                startMinute: sessionStartMinute,
+                endMinute: sessionEndMinute,
+                earlyClose: earlyClose
+              });
+            }
+          });
+
+          clock.track.replaceChildren();
+          clock.row.hidden = segments.length === 0;
+          clock.row.setAttribute("aria-label", clock.lane.label[language]);
+          clock.track.setAttribute("aria-label", clock.lane.label[language]);
+          segments.forEach(function (segmentInfo) {
+            const session = segmentInfo.session;
+            const segment = document.createElement("span");
+            segment.className = "exchange-segment";
+            segment.style.left = segmentInfo.left + "%";
+            segment.style.width = segmentInfo.width + "%";
+            segment.style.backgroundColor = session.color;
+            segment.textContent = session.segment[language];
+            segment.title = session.label[language] + " · " +
+              String(Math.floor(segmentInfo.startMinute / 60)).padStart(2, "0") + ":" +
+              String(segmentInfo.startMinute % 60).padStart(2, "0") + "–" +
+              String(Math.floor(segmentInfo.endMinute / 60)).padStart(2, "0") + ":" +
+              String(segmentInfo.endMinute % 60).padStart(2, "0") + " · " + segmentInfo.date +
+              (segmentInfo.earlyClose ? (language === "zh" ? " · 提早收盘日" : " · Early close") : "");
+            clock.track.appendChild(segment);
+          });
+        });
+      }
+
       function dateKey(parts) {
         return parts.year + "-" + parts.month + "-" + parts.day;
       }
@@ -588,6 +778,8 @@
         const marker = document.createElement("span");
         marker.className = "date-marker";
         marker.style.left = position + "%";
+        if (position <= 0) marker.classList.add("edge-start");
+        if (position >= 100) marker.classList.add("edge-end");
         const label = document.createElement("span");
         label.className = "date-marker-label";
         label.textContent = new Intl.DateTimeFormat(text("locale"), {
@@ -597,8 +789,7 @@
           day: "numeric"
         }).format(new Date(instant + 1000));
         if (position < 10) {
-          label.style.left = "4px";
-          label.style.transform = "none";
+          label.style.left = "calc(50% + 2em)";
         } else if (position > 90) {
           label.style.left = "auto";
           label.style.right = "4px";
@@ -645,28 +836,62 @@
         nowBadge.style.left = markerLeft + "px";
       }
 
+      var dateColorCache = {};
+      var dateColorPalette = ["#7ec8e3", "#e8734a", "#8bb8e0", "#9da5ba", "#a0d4b0", "#d4b8e0", "#e0c88b"];
+
+      function getDateLabel(date, timezone) {
+        var parts = getParts(date, timezone);
+        var day = Number(parts.day);
+        var month = Number(parts.month);
+        var year = Number(parts.year);
+        var dateKey = year + "-" + month + "-" + day;
+
+        if (!dateColorCache[dateKey]) {
+          var colorIndex = Object.keys(dateColorCache).length % dateColorPalette.length;
+          dateColorCache[dateKey] = {
+            text: month + "/" + day,
+            colorClass: "date-color-" + colorIndex
+          };
+        }
+        return dateColorCache[dateKey];
+      }
+
       function renderClock() {
         const now = new Date();
+        const secondText = String(now.getSeconds()).padStart(2, "0");
         worldClockNodes.forEach(function (card) {
-          const timezone = card.zone.id;
-          const parts = getParts(now, timezone);
-          card.time.textContent = parts.hour + ":" + parts.minute + ":" + parts.second;
-          const timeZoneAbbreviation = new Intl.DateTimeFormat("en-US", {
-            timeZone: timezone,
-            timeZoneName: "short"
-          }).formatToParts(now).filter(function (part) {
-            return part.type === "timeZoneName";
-          })[0].value;
-          card.standard.textContent = timeZoneAbbreviation.indexOf("GMT") === 0
-            ? (card.zone.timeZoneAbbreviation || timeZoneAbbreviation)
-            : timeZoneAbbreviation;
-          card.offset.textContent = new Intl.DateTimeFormat("en-US", {
-            timeZone: timezone,
-            timeZoneName: "shortOffset"
-          }).formatToParts(now).filter(function (part) {
-            return part.type === "timeZoneName";
-          })[0].value;
+          card.seconds.textContent = secondText;
         });
+
+        const clockMinute = String(Math.floor(now.getTime() / 60000));
+        if (clockMinute !== lastClockMinute) {
+          lastClockMinute = clockMinute;
+          worldClockNodes.forEach(function (card) {
+            const timezone = card.zone.id;
+            const parts = getParts(now, timezone);
+            card.hourMinute.textContent = parts.hour + ":" + parts.minute;
+            const timeZoneAbbreviation = new Intl.DateTimeFormat("en-US", {
+              timeZone: timezone,
+              timeZoneName: "short"
+            }).formatToParts(now).filter(function (part) {
+              return part.type === "timeZoneName";
+            })[0].value;
+            card.standard.textContent = timeZoneAbbreviation.indexOf("GMT") === 0
+              ? (card.zone.timeZoneAbbreviation || timeZoneAbbreviation)
+              : timeZoneAbbreviation;
+            card.offset.textContent = new Intl.DateTimeFormat("en-US", {
+              timeZone: timezone,
+              timeZoneName: "shortOffset"
+            }).formatToParts(now).filter(function (part) {
+              return part.type === "timeZoneName";
+            })[0].value;
+
+            var dateInfo = getDateLabel(now, timezone);
+            card.date.textContent = dateInfo.text;
+            card.date.className = "timezone-date " + dateInfo.colorClass;
+          });
+        }
+
         const timelineSlot = String(Math.floor(now.getTime() / (20 * 60 * 1000)));
         if (timelineSlot !== lastTimelineSlot) {
           lastTimelineSlot = timelineSlot;
@@ -674,7 +899,7 @@
           const end = timelineStart + 36 * 60 * 60000;
           worldClockNodes.forEach(function (card) {
             const night = [17, 20, 30];
-            const weekdayDay = [246, 225, 160];
+            const weekdayDay = [255, 255, 255];
             const saturdayDay = [195, 231, 202];
             const sundayDay = [244, 185, 190];
             function mix(from, to, ratio) {
@@ -700,6 +925,7 @@
             card.track.style.background = "linear-gradient(to right, " + stops.join(", ") + ")";
             renderDateMarkers(card, timelineStart, end);
           });
+          renderMarketSessionBars(timelineStart, end);
         }
         positionNowMarker(now);
       }
@@ -715,6 +941,8 @@
         document.getElementById("language-toggle").setAttribute("aria-label", copy.switchLanguage);
         document.getElementById("world-heading").textContent = copy.worldClock;
         document.getElementById("world-caption").textContent = copy.worldCaption;
+        marketCalendarNote.textContent = copy.marketCalendarNote;
+        renderMarketLegend();
         document.getElementById("world-panel").setAttribute("aria-label", copy.worldAria);
         document.getElementById("world-timeline").setAttribute("aria-label", copy.worldAria);
         document.getElementById("alarms-heading").textContent = copy.alarms;
@@ -746,15 +974,16 @@
           card.track.setAttribute("aria-label", zoneName(card.zone.id) + " " + copy.dayNightAria);
         });
         document.getElementById("create-heading").textContent = editingAlarmId ? copy.editAlarm : copy.addAlarm;
-        submitButton.textContent = editingAlarmId ? copy.saveChanges : "＋　" + copy.addAlarm;
+        submitButton.textContent = editingAlarmId ? copy.saveChanges : "＋ " + copy.addAlarm;
         cancelEditButton.textContent = copy.cancel;
         if (editingAlarmId) notice.textContent = copy.editNotice;
         if (ringingAlarm) {
-          document.getElementById("alert-title").textContent = copy.ring + " · " + ringingAlarm.time;
+          document.getElementById("alert-title").textContent = copy.ring + " " + ringingAlarm.time;
           document.getElementById("alert-subtitle").textContent =
-            zoneName(ringingAlarm.timezone) + " · " + dayLabel(ringingAlarm.days);
+            zoneName(ringingAlarm.timezone) + " " + dayLabel(ringingAlarm.days);
         }
         lastTimelineSlot = "";
+        lastClockMinute = "";
         renderClock();
         renderAlarms();
       }
@@ -766,7 +995,7 @@
           .map(function (day) {
             return language === "zh" ? "周" + text("weekdayShort")[day] : text("weekdayShort")[day];
           });
-        return text("weekly") + (language === "zh" ? "：" : ": ") + labels.join(language === "zh" ? "、" : ", ");
+        return text("weekly") + (language === "zh" ? ":" : ": ") + labels.join(language === "zh" ? "、" : ", ");
       }
 
       function wallTimeToInstant(year, month, day, time, timezone) {
@@ -853,7 +1082,7 @@
           cell.className = "alarm-zone-cell" + (zone.id === alarm.timezone ? " source-zone" : "");
           const name = document.createElement("div");
           name.className = "alarm-zone-name";
-          name.textContent = zoneShortName(zone) + (zone.id === alarm.timezone ? " · " + text("alarmZone") : "");
+          name.textContent = zoneShortName(zone) + (zone.id === alarm.timezone ? " " + text("alarmZone") : "");
           const time = document.createElement("div");
           time.className = "alarm-zone-time";
           const shift = document.createElement("div");
@@ -899,7 +1128,7 @@
           time.textContent = alarm.time;
           const meta = document.createElement("div");
           meta.className = "alarm-meta";
-          meta.textContent = zoneName(alarm.timezone) + (language === "zh" ? "时间 · " : " time · ") + dayLabel(alarm.days);
+          meta.textContent = zoneName(alarm.timezone) + (language === "zh" ? "时间 " : " time ") + dayLabel(alarm.days);
           main.append(time, meta);
 
           const actions = document.createElement("div");
@@ -956,8 +1185,8 @@
 
       function ring(alarm) {
         ringingAlarm = alarm;
-        document.getElementById("alert-title").textContent = text("ring") + " · " + alarm.time;
-        document.getElementById("alert-subtitle").textContent = zoneName(alarm.timezone) + " · " + dayLabel(alarm.days);
+        document.getElementById("alert-title").textContent = text("ring") + " " + alarm.time;
+        document.getElementById("alert-subtitle").textContent = zoneName(alarm.timezone) + " " + dayLabel(alarm.days);
         alertBox.classList.add("visible");
         try {
           const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -1001,7 +1230,7 @@
           button.setAttribute("aria-pressed", "false");
         });
         document.getElementById("create-heading").textContent = text("addAlarm");
-        submitButton.textContent = "＋　" + text("addAlarm");
+        submitButton.textContent = "＋ " + text("addAlarm");
         cancelEditButton.textContent = text("cancel");
         cancelEditButton.hidden = true;
         if (clearNotice !== false) notice.textContent = "";
